@@ -1,0 +1,12 @@
+.git
+.gitignore
+.settings
+.classpath
+.project
+.metadata
+bin/
+tomcat-config/
+sql/
+docker/
+*.md
+GAME_UI_DESIGN_PLAN.md

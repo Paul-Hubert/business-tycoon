@@ -1,0 +1,46 @@
+services:
+
+  # ── MariaDB Database ────────────────────────────────────
+  mariadb:
+    image: mariadb:11
+    container_name: tycoon-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpassword
+      MARIADB_DATABASE: db
+      MARIADB_USER: user
+      MARIADB_PASSWORD: password
+    volumes:
+      # Persist database between restarts
+      - db_data:/var/lib/mysql
+      # Auto-run init script on first startup
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - tycoon-net
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Tomcat Application Server ───────────────────────────
+  tomcat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tycoon-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - tycoon-net
+
+volumes:
+  db_data:
+
+networks:
+  tycoon-net:
+    driver: bridge
