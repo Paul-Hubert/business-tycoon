@@ -1,109 +1,19 @@
-.m-top {
-	margin-top:6%;
+/* ============================================================
+   TRADE EMPIRE — Game-specific styles
+   Overrides and additions specific to the game page.
+   ============================================================ */
+
+/* Capitalize resource names in cards */
+.card__title {
+	text-transform: capitalize;
 }
 
-span {
-	white-space:nowrap;
+/* Resource name capitalization in sidebar */
+.sidebar__item-name {
+	text-transform: capitalize;
 }
 
-
-.navbar {
-	width: 100vw;
+/* Recipe text formatting */
+.card__recipe {
+	text-transform: capitalize;
 }
-
-.navrow {
-	display: flex;
-	flex-direction: row;
-	align-content: center;
-	
-	height: 100%;
-	width: 100vw;
-}
-
-.navitem {
-	
-}
-
-
-.scroll{
-	position: relative;
-	overflow-y: scroll;
-	height: 90vh;
-	max-width: fit-content;
-}
-
-.scroll2{
-	position: relative;
-	overflow-y: scroll;
-	height: 70%;
-	max-width: fit-content;
-}
-
-.card{
-	border-color:gray;
-	width: 30rem;
-}
-
-.area{
-	width:150px
-}
-
-nav{
-	height: 6%;
-}
-
-.left{
-	float: left;
-}
-
-.right{
-	float: right;
-}
-
-.dark{
-	background-color : #1e1e1e;
-}
-
-.light-dark{
-	background-color : #4f5b62;
-}
-
-.darker{
-	background-color : #000a12;
-}
-
-.scroll::-webkit-scrollbar {
-  width: 16px;
-}
-
-.scroll::-webkit-scrollbar-track {
-  background: dark;
-}
-
-.scroll::-webkit-scrollbar-thumb {
-  background-color: gray;
-  border-radius: 20px;
-  border: 3px solid light-gray; 
-  }
-
-
-html, body {
-	margin: 0; 
-	height: 100%; 
-	overflow: hidden
-}
-
-body::-webkit-scrollbar {
-  margin-top: 3%;
-  width: 16px;
-}
-
-body::-webkit-scrollbar-track {
-  background: dark;
-}
-
-body::-webkit-scrollbar-thumb {
-  background-color: gray;
-  border-radius: 20px;
-  border: 3px solid light-gray; 
-  }

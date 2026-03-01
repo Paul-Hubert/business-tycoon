@@ -1,0 +1,276 @@
+/* ============================================================
+   TRADE EMPIRE — Animations & Motion
+   Hover effects, value flashes, production pulse,
+   toast entrance/exit, and all motion design.
+   ============================================================ */
+
+
+/* ===================
+   VALUE CHANGE FLASH
+   Applies green/red background flash when a number changes.
+   Add .flash-positive or .flash-negative via JS.
+   =================== */
+
+@keyframes flash-green {
+  0%   { background-color: var(--green-glow); }
+  100% { background-color: transparent; }
+}
+
+@keyframes flash-red {
+  0%   { background-color: var(--red-glow); }
+  100% { background-color: transparent; }
+}
+
+.flash-positive {
+  animation: flash-green var(--duration-slow) var(--ease-out) 1;
+  border-radius: var(--radius-sm);
+}
+
+.flash-negative {
+  animation: flash-red var(--duration-slow) var(--ease-out) 1;
+  border-radius: var(--radius-sm);
+}
+
+
+/* ===================
+   PRODUCTION PULSE
+   Gentle glow pulse on resources actively producing.
+   =================== */
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+  50%      { box-shadow: 0 0 12px 2px var(--accent-glow); }
+}
+
+.pulse-producing {
+  animation: pulse-glow 2s var(--ease-in-out) infinite;
+}
+
+
+/* ===================
+   TOAST ENTER / EXIT
+   =================== */
+
+@keyframes toast-enter {
+  0% {
+    opacity: 0;
+    transform: translateX(40px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toast-exit {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(40px) scale(0.95);
+  }
+}
+
+.toast-enter {
+  animation: toast-enter var(--duration-slow) var(--ease-spring) forwards;
+}
+
+.toast-exit {
+  animation: toast-exit var(--duration-normal) var(--ease-out) forwards;
+}
+
+
+/* ===================
+   CARD HOVER LIFT
+   =================== */
+
+.card--interactive {
+  transition: transform var(--duration-normal) var(--ease-spring),
+              border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.card--interactive:hover {
+  transform: translateY(-2px);
+}
+
+.card--interactive:active {
+  transform: translateY(0);
+}
+
+
+/* ===================
+   BUTTON PRESS
+   =================== */
+
+.btn {
+  transition: transform var(--duration-fast) var(--ease-spring),
+              background-color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+
+/* ===================
+   SIDEBAR ITEM SLIDE-IN
+   =================== */
+
+@keyframes slide-in-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.sidebar__item {
+  animation: slide-in-left var(--duration-normal) var(--ease-out) backwards;
+}
+
+.sidebar__item:nth-child(1)  { animation-delay:  0ms; }
+.sidebar__item:nth-child(2)  { animation-delay:  30ms; }
+.sidebar__item:nth-child(3)  { animation-delay:  60ms; }
+.sidebar__item:nth-child(4)  { animation-delay:  90ms; }
+.sidebar__item:nth-child(5)  { animation-delay: 120ms; }
+.sidebar__item:nth-child(6)  { animation-delay: 150ms; }
+.sidebar__item:nth-child(7)  { animation-delay: 180ms; }
+.sidebar__item:nth-child(8)  { animation-delay: 210ms; }
+.sidebar__item:nth-child(9)  { animation-delay: 240ms; }
+.sidebar__item:nth-child(10) { animation-delay: 270ms; }
+.sidebar__item:nth-child(11) { animation-delay: 300ms; }
+
+
+/* ===================
+   MONEY COUNTER TICK
+   Brief scale bump when money value updates.
+   =================== */
+
+@keyframes money-tick {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.money-tick {
+  animation: money-tick var(--duration-normal) var(--ease-spring) 1;
+}
+
+
+/* ===================
+   PAGE FADE-IN
+   =================== */
+
+@keyframes fade-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.fade-in {
+  animation: fade-in var(--duration-slow) var(--ease-out) forwards;
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fade-in-up var(--duration-slow) var(--ease-out) forwards;
+}
+
+
+/* ===================
+   LOADING SPINNER
+   =================== */
+
+@keyframes spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-default);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.spinner--sm {
+  width: 14px;
+  height: 14px;
+  border-width: 1.5px;
+}
+
+
+/* ===================
+   SHAKE (error feedback)
+   =================== */
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(6px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(4px); }
+}
+
+.shake {
+  animation: shake 0.4s var(--ease-out) 1;
+}
+
+
+/* ===================
+   PROGRESS BAR SHIMMER
+   =================== */
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.progress__bar--shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--accent-dim) 0%,
+    var(--accent) 40%,
+    var(--accent-hover) 50%,
+    var(--accent) 60%,
+    var(--accent-dim) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s var(--ease-in-out) infinite;
+}
+
+
+/* ===================
+   REDUCED MOTION
+   Respect user preference for minimal animation.
+   =================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

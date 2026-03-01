@@ -2,188 +2,342 @@
 <%@ page import="simulation.*"%>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 	<head>
-		<title>Login</title>
-		<link
-			href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
-			rel="stylesheet"
-			integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
-			crossorigin="anonymous">
+		<title>Trade Empire</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+		<link href="/css/variables.css" rel="stylesheet">
+		<link href="/css/layout.css" rel="stylesheet">
+		<link href="/css/components.css" rel="stylesheet">
+		<link href="/css/animations.css" rel="stylesheet">
 		<link href="/css/game.css" rel="stylesheet">
 		<link href="/css/common.css" rel="stylesheet">
 		<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
-		<script
-			src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-			integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-			crossorigin="anonymous"></script>
 		<script src="/js/common.js"></script>
 		<script src="/js/game.js"></script>
-		<meta charset="utf-8">
 	</head>
-	<body class="bg-dark text-white">
-	
-		<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
-			<symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
-				<path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-			</symbol>
-		</svg>
 
-		<div class="container">
-	
-			<%
-			if (request.getAttribute("error") != null) {
-			%>
-	
-			<div class="alert alert-danger" role="alert">
-				${requestScope.error}</div>
-	
-			<%
-			}
-			%>
-	
-			<%
-			User user = (User) request.getAttribute("user");
-			%>
-	
-			<nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-secondary container-fluid">
-				<div class="navrow row">
-					<span class="navitem navbar-brand col">Game</span>
-					<span id="username" class="navitem navbar-text col"><%= user.name %></span>
-					<span class="navitem navbar-text col">$<span id="money" class="currency"></span></span>
-					<span class="navitem navbar-text col-8">Top player : <span id="firstUser"></span> with $<span id="firstMoney"></span></span>
-					
-					<form class="navitem col" method="post" action="/">
-						<button type="submit" name="action" value="logout"
-							class="btn btn-secondary">Log out</button>
+	<%
+	User user = (User) request.getAttribute("user");
+	%>
+
+	<body>
+		<div class="page fade-in">
+
+			<!-- ========== TOP BAR ========== -->
+			<header class="topbar">
+				<a class="topbar__brand" href="#">
+					<span class="topbar__brand-icon">&#127981;</span>
+					<span>Trade Empire</span>
+				</a>
+
+				<div class="topbar__stats">
+					<div class="topbar__stat">
+						<span class="topbar__stat-label">Balance</span>
+						<span class="topbar__stat-value topbar__stat-value--money font-mono">$<span id="money">0</span></span>
+					</div>
+					<div class="topbar__stat">
+						<span class="topbar__stat-label">&#x1f451;</span>
+						<span id="firstUser" class="topbar__stat-value">-</span>
+						<span class="text-muted font-mono">$<span id="firstMoney">0</span></span>
+					</div>
+				</div>
+
+				<div class="topbar__actions">
+					<span id="username" class="text-secondary" style="font-size: var(--text-sm);"><%= user.name %></span>
+					<form method="post" action="/" style="margin:0;">
+						<button type="submit" name="action" value="logout" class="btn btn--ghost btn--sm">Log out</button>
 					</form>
 				</div>
-			</nav>
-	
-			<div class="row m-top">
-				<div class="col">
-					<ul class="scroll group-list bg-dark">
-			
-						<%
-						for (Resource res : Resource.values()) {
-							ResourceProduction rp = user.getProduction().get(res);
-							long price = Market.price(res);
-						%>
-						
-						<li id="<%=res%>" class="<%=res%> list-group-item list-group-item-dark bg-dark">
-							<div class="card text-white dark mb-3">
-								<div class="card-body">
-								
-								<div class="form-group">
-									
-							  		<h5 class="resource card-title">
-									<%=res%>
-							  		<%-- <span title=<%=info %>>
-							  		<svg class="bi flex-shrink-0 me-2" width="20" height="20" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
-							  		</span> --%>
-							  		
-							  		</h5>
-							  		
-									</div>
-									<%
-									Recipe recipe = Crafting.recipes.get(res);
-									String craft="";
-									if(recipe!=null){
-										craft = "<h6 class='card-subtitle1 mb-2 text-muted'>Craft : <span class='craft'>" + recipe.getInfo() + "<//span></h6>";
-									}
-									%>
-									<%=craft %>
-									<h6 class="card-subtitle1 mb-2 text-muted">Price : $<span class="price"></span></h6>
-							    	<h6 class="card-subtitle1 mb-2 text-muted">Stock : <span class="count"></span></h6>
-							    	<h6 class="card-subtitle2 mb-2 text-muted">Production : <span class="production"></span></h6>
-									<div class="card-subtitle1 form-group text-muted">
-										<label class="card-subtitle1 form-check-label">Research investment : </label>
-					    				$<input type="number" data-type="currency" step=0.01 class="research-cost area mb-2" name="invest" onchange="changeResearch(<%=res.getID()%>, this)" value="">
-					    			</div>
-							    	<h6 class="card-subtitle1 mb-2 text-muted">Production efficiency : <span class="research"></span>%</h6>
-									<button onclick="addProduction(<%=res.getID()%>)" type="button" class="btn btn-secondary">Add production for $<span class="production-cost currency"></span></button>
-							  	</div>
+			</header>
+
+			<!-- ========== MAIN LAYOUT ========== -->
+			<div class="main">
+
+				<!-- ========== SIDEBAR ========== -->
+				<aside class="sidebar">
+
+					<!-- Nav tabs -->
+					<div class="sidebar__nav">
+						<div class="sidebar__nav-item sidebar__nav-item--active" data-view="production" onclick="switchView('production')">
+							&#9881; Production
+						</div>
+						<div class="sidebar__nav-item" data-view="market" onclick="switchView('market')">
+							&#128200; Market
+						</div>
+					</div>
+
+					<div class="sidebar__divider"></div>
+
+					<!-- Raw Resources -->
+					<div class="sidebar__section">
+						<div class="sidebar__heading">Raw Materials</div>
+						<div class="sidebar__item sidebar__item--active" data-resource="wheat" onclick="selectResource('wheat')">
+							<span class="sidebar__item-icon">&#127806;</span>
+							<span class="sidebar__item-name">Wheat</span>
+							<span class="sidebar__item-count" id="sidebar-wheat-count">0</span>
+						</div>
+						<div class="sidebar__item" data-resource="iron" onclick="selectResource('iron')">
+							<span class="sidebar__item-icon">&#9935;</span>
+							<span class="sidebar__item-name">Iron</span>
+							<span class="sidebar__item-count" id="sidebar-iron-count">0</span>
+						</div>
+						<div class="sidebar__item" data-resource="copper" onclick="selectResource('copper')">
+							<span class="sidebar__item-icon">&#128310;</span>
+							<span class="sidebar__item-name">Copper</span>
+							<span class="sidebar__item-count" id="sidebar-copper-count">0</span>
+						</div>
+						<div class="sidebar__item" data-resource="gold" onclick="selectResource('gold')">
+							<span class="sidebar__item-icon">&#129351;</span>
+							<span class="sidebar__item-name">Gold</span>
+							<span class="sidebar__item-count" id="sidebar-gold-count">0</span>
+						</div>
+						<div class="sidebar__item" data-resource="petrol" onclick="selectResource('petrol')">
+							<span class="sidebar__item-icon">&#128738;</span>
+							<span class="sidebar__item-name">Petrol</span>
+							<span class="sidebar__item-count" id="sidebar-petrol-count">0</span>
+						</div>
+					</div>
+
+					<div class="sidebar__divider"></div>
+
+					<!-- Crafted Resources -->
+					<div class="sidebar__section">
+						<div class="sidebar__heading">Crafted</div>
+						<div class="sidebar__item" data-resource="bread" onclick="selectResource('bread')">
+							<span class="sidebar__item-icon">&#127838;</span>
+							<span class="sidebar__item-name">Bread</span>
+							<span class="sidebar__item-count" id="sidebar-bread-count">0</span>
+						</div>
+						<div class="sidebar__item" data-resource="steel" onclick="selectResource('steel')">
+							<span class="sidebar__item-icon">&#128297;</span>
+							<span class="sidebar__item-name">Steel</span>
+							<span class="sidebar__item-count" id="sidebar-steel-count">0</span>
+						</div>
+						<div class="sidebar__item" data-resource="plastic" onclick="selectResource('plastic')">
+							<span class="sidebar__item-icon">&#128230;</span>
+							<span class="sidebar__item-name">Plastic</span>
+							<span class="sidebar__item-count" id="sidebar-plastic-count">0</span>
+						</div>
+						<div class="sidebar__item" data-resource="circuit" onclick="selectResource('circuit')">
+							<span class="sidebar__item-icon">&#128268;</span>
+							<span class="sidebar__item-name">Circuit</span>
+							<span class="sidebar__item-count" id="sidebar-circuit-count">0</span>
+						</div>
+					</div>
+
+					<div class="sidebar__divider"></div>
+
+					<!-- Consumer Goods -->
+					<div class="sidebar__section">
+						<div class="sidebar__heading">Consumer Goods</div>
+						<div class="sidebar__item" data-resource="car" onclick="selectResource('car')">
+							<span class="sidebar__item-icon">&#128663;</span>
+							<span class="sidebar__item-name">Car</span>
+							<span class="sidebar__item-count" id="sidebar-car-count">0</span>
+						</div>
+						<div class="sidebar__item" data-resource="phone" onclick="selectResource('phone')">
+							<span class="sidebar__item-icon">&#128241;</span>
+							<span class="sidebar__item-name">Phone</span>
+							<span class="sidebar__item-count" id="sidebar-phone-count">0</span>
+						</div>
+					</div>
+
+				</aside>
+
+				<!-- ========== CONTENT AREA ========== -->
+				<main class="content">
+
+					<%
+					if (request.getAttribute("error") != null) {
+					%>
+					<div class="alert alert--error" role="alert">
+						${requestScope.error}
+					</div>
+					<%
+					}
+					%>
+
+					<!-- ===== PRODUCTION VIEW ===== -->
+					<div id="view-production">
+						<div class="content__header">
+							<div>
+								<h1 class="content__title">Production Dashboard</h1>
+								<p class="content__subtitle">Manage your resource production and research investments</p>
 							</div>
-						</li>
-						
-						<%
-						}
-						%>
-			
-					</ul>
-				</div>
-				
-				<div class="col">
-	
-					<form id="search" class="auto-submit" method="post" action="/action">
-					
-						<div class="form-check form-check-inline mb-2">
-							<input class="form-check-input" type="radio" name="achat_vente" value="true" onchange="search()" required checked>
-					  		<label class="form-check-label">Buy</label>
 						</div>
-						
-						<div class="form-check form-check-inline mb-2">
-					  		<input class="form-check-input" type="radio" name="achat_vente" value="false" onchange="search()" required>
-					  		<label class="form-check-label">Sell</label>
-						</div>
-						
-						<div class="form-group">
-							<select class="custom-select mb-2" name="resource" onchange="search()" required>
-						      	
-						      	<%
-								for (Resource res : Resource.values()) {
-								%>
-								
-								<option value="<%=res.getID() %>"><%=res %></option>
-								
-								<%
+
+						<div class="resource-grid">
+							<%
+							for (Resource res : Resource.values()) {
+								ResourceProduction rp = user.getProduction().get(res);
+								Recipe recipe = Crafting.recipes.get(res);
+
+								String icon = "";
+								String category = "";
+								switch(res.name()) {
+									case "wheat":   icon = "&#127806;"; category = "raw"; break;
+									case "iron":    icon = "&#9935;";   category = "raw"; break;
+									case "copper":  icon = "&#128310;"; category = "raw"; break;
+									case "gold":    icon = "&#129351;"; category = "raw"; break;
+									case "petrol":  icon = "&#128738;"; category = "raw"; break;
+									case "bread":   icon = "&#127838;"; category = "crafted"; break;
+									case "steel":   icon = "&#128297;"; category = "crafted"; break;
+									case "plastic": icon = "&#128230;"; category = "crafted"; break;
+									case "circuit": icon = "&#128268;"; category = "crafted"; break;
+									case "car":     icon = "&#128663;"; category = "consumer"; break;
+									case "phone":   icon = "&#128241;"; category = "consumer"; break;
 								}
-								%>
-								
-						    </select>
-				     	</div>
-				     	
-				     	<div class="form-group form-check-inline">
-					    	<label class="form-check-label">Target Price $</label>
-					    	<input type="text" data-type="currency" step=0.01 class="area mb-2" value="1" name="price" required>
-					  	</div>
-					  	
-					  	<div class="form-group">
-					    	<label class="form-check-label">Target Quantity</label>
-					    	<input type="number" step=1 class="area mb-2" value="10" name="quantity" required>
-					    </div>
-					  	
-					  	<div class="form-group row">
-					  		<button type="button" onclick="search()" name="action" value="search" class="btn btn-secondary m-2 col-md-2">Search</button>
-					  		<button type="button" onclick="publish()" name="action" value="publish" class="btn btn-secondary m-2 col-md-2">Publish</button>
-					  	</div>
-					</form>
-					
-					<ul hidden="" class= "scroll2">
-						<li id="template" class="list-group-item list-group-item-dark bg-dark">
-							<div class="card text-white dark mb-3">
-								<div class="card-body">
-							    	<h6 class="card-subtitle1 mb-2 text-muted">User : <span class="offerer"></span></h6>
-							    	<h6 class="card-subtitle1 mb-2 text-muted">Price : $<span class="price currency"></span></h6>
-							    	<h6 class="card-subtitle1 mb-2 text-muted">Quantity : <span class="quantity"></span></h6>
-									<button type="button" onclick="deleteOffer(this)" class="delete btn btn-secondary">Delete</button>
-							  	</div>
+							%>
+
+							<div id="<%= res %>" class="card card--interactive" data-resource="<%= res %>">
+								<div class="card__header">
+									<span class="card__icon"><%= icon %></span>
+									<span class="card__title"><%= res %></span>
+									<span class="badge badge--<%= category %>"><%= category %></span>
+								</div>
+
+								<% if(recipe != null) { %>
+								<div class="card__recipe">
+									<span><%= recipe.getInfo() %></span>
+									<span class="card__recipe-arrow">&rarr;</span>
+									<span>1 <%= res %></span>
+								</div>
+								<% } %>
+
+								<div class="card__body">
+									<div class="card__stat">
+										<span class="card__stat-label">Stock</span>
+										<span class="card__stat-value"><span class="count">0</span></span>
+									</div>
+									<div class="card__stat">
+										<span class="card__stat-label">Price</span>
+										<span class="card__stat-value card__stat-value--money">$<span class="price">0</span></span>
+									</div>
+									<div class="card__stat">
+										<span class="card__stat-label">Production</span>
+										<span class="card__stat-value card__stat-value--positive">+<span class="production">0</span>/tick</span>
+									</div>
+									<div class="card__stat">
+										<span class="card__stat-label">Efficiency</span>
+										<span class="card__stat-value"><span class="research">10000</span>%</span>
+									</div>
+								</div>
+
+								<div class="card__footer">
+									<div class="form-group" style="margin-bottom: var(--space-2);">
+										<label class="form-label">Research $/tick</label>
+										<input type="number" step="0.01" class="form-input form-input--money research-cost"
+											name="invest" onchange="changeResearch(<%= res.getID() %>, this)" value="">
+									</div>
+									<button onclick="addProduction(<%= res.getID() %>)" type="button" class="btn btn--primary btn--sm btn--block">
+										Add Production &mdash; $<span class="production-cost">0</span>
+									</button>
+								</div>
 							</div>
-						</li>
-					</ul>
-					
-					<ul id="offer-list" class="scroll group-list bg-dark">
-						
-						
-			
-					</ul>
-					
-				</div>
-				
+
+							<%
+							}
+							%>
+						</div>
+					</div>
+
+					<!-- ===== MARKET VIEW ===== -->
+					<div id="view-market" style="display:none;">
+						<div class="content__header">
+							<div>
+								<h1 class="content__title">Marketplace</h1>
+								<p class="content__subtitle">Buy and sell resources with other players</p>
+							</div>
+						</div>
+
+						<div class="split">
+							<!-- Market Form -->
+							<div class="panel">
+								<div class="panel__header">
+									<h2 class="panel__title">Create Order</h2>
+								</div>
+
+								<form id="search" method="post" action="/action">
+									<div class="form-group">
+										<label class="form-label">Order Type</label>
+										<div class="radio-group">
+											<div class="radio-group__option">
+												<input type="radio" id="radio-buy" name="achat_vente" value="true" onchange="search()" required checked>
+												<label class="radio-group__label" for="radio-buy">Buy</label>
+											</div>
+											<div class="radio-group__option">
+												<input type="radio" id="radio-sell" name="achat_vente" value="false" onchange="search()">
+												<label class="radio-group__label" for="radio-sell">Sell</label>
+											</div>
+										</div>
+									</div>
+
+									<div class="form-group">
+										<label class="form-label">Resource</label>
+										<select class="form-select" name="resource" onchange="search()" required>
+											<%
+											for (Resource res : Resource.values()) {
+											%>
+											<option value="<%= res.getID() %>"><%= res %></option>
+											<%
+											}
+											%>
+										</select>
+									</div>
+
+									<div class="form-row">
+										<div class="form-group">
+											<label class="form-label">Price ($)</label>
+											<input type="text" class="form-input form-input--money" value="1" name="price" required>
+										</div>
+										<div class="form-group">
+											<label class="form-label">Quantity</label>
+											<input type="number" step="1" class="form-input" value="10" name="quantity" required>
+										</div>
+									</div>
+
+									<div class="form-row gap-3 mt-3">
+										<button type="button" onclick="search()" class="btn btn--secondary flex-1">Search</button>
+										<button type="button" onclick="publish()" class="btn btn--primary flex-1">Publish Offer</button>
+									</div>
+								</form>
+							</div>
+
+							<!-- Offers List -->
+							<div class="panel">
+								<div class="panel__header">
+									<h2 class="panel__title">Open Offers</h2>
+								</div>
+
+								<!-- Hidden template for offer items -->
+								<ul hidden>
+									<li id="template" class="offer-item">
+										<span class="offer-item__user offerer"></span>
+										<span class="offer-item__price">$<span class="price">0</span></span>
+										<span class="offer-item__quantity"><span class="quantity">0</span> units</span>
+										<span class="offer-item__actions">
+											<button type="button" onclick="deleteOffer(this)" class="delete btn btn--danger btn--sm">Remove</button>
+										</span>
+									</li>
+								</ul>
+
+								<ul id="offer-list" class="offer-list">
+								</ul>
+							</div>
+						</div>
+					</div>
+
+				</main>
 			</div>
-			
-	
+
+			<!-- Toast container -->
+			<div class="toast-container" id="toast-container"></div>
+
 		</div>
-		
 	</body>
 </html>

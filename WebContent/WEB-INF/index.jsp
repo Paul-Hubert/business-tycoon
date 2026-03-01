@@ -1,49 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 	<head>
-		<title>Login</title>
-		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-		<link href="/css/common.css" rel="stylesheet">
-		<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
-		<script src="/js/common.js"></script>
+		<title>Trade Empire</title>
 		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+		<link href="/css/variables.css" rel="stylesheet">
+		<link href="/css/layout.css" rel="stylesheet">
+		<link href="/css/components.css" rel="stylesheet">
+		<link href="/css/animations.css" rel="stylesheet">
+		<link href="/css/common.css" rel="stylesheet">
 	</head>
-	<body>
-		<div class="container">
-			
+	<body class="login-page fade-in">
+
+		<div class="login-card">
+			<div class="login-card__logo">
+				<div class="login-card__title">Trade Empire</div>
+				<div class="login-card__subtitle">Build. Produce. Dominate.</div>
+			</div>
+
 			<%
 			if(request.getAttribute("error") != null) {
 			%>
-
-			<div class="alert alert-danger" role="alert">
+			<div class="alert alert--error" role="alert">
 				${requestScope.error}
 			</div>
-			
 			<%
 			}
 			%>
-			
-			<h2 class="">Trade</h2>
-			
-				<div>
-					<form method="post" action="/">
-						<div class="form-group">
-						    <label for="login-user">Username</label>
-						    <input type="text" class="form-control" id="login-user" name="user" placeholder="Enter username">
-						</div>
-						<div class="form-group">
-						    <label for="login-pass">Password</label>
-						    <input type="password" class="form-control" id="login-pass" name="pass" placeholder="Enter password">
-						</div>
-						<div class="row">
-			  				<button type="submit" name="action" value="login" class="logbutton btn btn-primary col-md-6 align-middle">Login</button>
-			  				<button type="submit" name="action" value="signup" class="logbutton btn btn-primary col-md-6 align-middle">Sign up</button>
-		  				</div>
-					</form>
+
+			<form method="post" action="/">
+				<div class="form-group">
+					<label class="form-label" for="login-user">Username</label>
+					<input type="text" class="form-input" id="login-user" name="user" placeholder="Enter username" required>
 				</div>
-			
-			
+				<div class="form-group">
+					<label class="form-label" for="login-pass">Password</label>
+					<input type="password" class="form-input" id="login-pass" name="pass" placeholder="Enter password" required>
+				</div>
+				<div class="form-row gap-3 mt-4">
+					<button type="submit" name="action" value="login" class="btn btn--primary btn--lg flex-1">Login</button>
+					<button type="submit" name="action" value="signup" class="btn btn--secondary btn--lg flex-1">Sign Up</button>
+				</div>
+			</form>
+
+			<p class="text-center text-muted mt-4" style="font-size: var(--text-sm);">
+				Compete with players worldwide to build the ultimate trade empire.
+			</p>
 		</div>
+
 	</body>
 </html>
