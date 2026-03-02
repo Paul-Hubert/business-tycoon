@@ -1,19 +1,16 @@
 services:
 
-  # ── MariaDB Database ────────────────────────────────────
   mariadb:
     image: mariadb:11
     container_name: tycoon-db
     restart: unless-stopped
     environment:
       MARIADB_ROOT_PASSWORD: rootpassword
-      MARIADB_DATABASE: db
-      MARIADB_USER: user
-      MARIADB_PASSWORD: password
+      MARIADB_DATABASE:      db
+      MARIADB_USER:          user
+      MARIADB_PASSWORD:      password
     volumes:
-      # Persist database between restarts
       - db_data:/var/lib/mysql
-      # Auto-run init script on first startup
       - ./docker/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     networks:
       - tycoon-net
@@ -23,7 +20,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # ── Tomcat Application Server ───────────────────────────
   tomcat:
     build:
       context: .

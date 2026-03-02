@@ -21,37 +21,36 @@ public class SimulationServlet implements ServletContextListener {
 	
 	@Override
 	public void contextInitialized(ServletContextEvent event) {
-	    scheduler = Executors.newScheduledThreadPool(16);
-	    
 	    try {
-			
-			World world = World.create();
-			
-			scheduler.scheduleAtFixedRate(() -> {
-				
-				try {
-					Market.updatePrice();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				
-			}, 0, PRICE_INTERVAL_MINUTES, TimeUnit.MINUTES);
-			
-			scheduler.scheduleAtFixedRate(() -> {
-				
-				try {
-					Market.step(scheduler);
-					world.step(scheduler);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				
-			}, 0, SIMULATION_INTERVAL, TimeUnit.MILLISECONDS);
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	    
+	        scheduler = Executors.newScheduledThreadPool(16);
+
+	        World world = World.create();
+
+	        scheduler.scheduleAtFixedRate(() -> {
+	            try {
+	                Market.updatePrice();
+	            } catch (Exception e) {
+	                System.err.println("Error in Market.updatePrice: " + e.getMessage());
+	                e.printStackTrace(System.err);
+	            }
+	        }, 0, PRICE_INTERVAL_MINUTES, TimeUnit.MINUTES);
+
+	        scheduler.scheduleAtFixedRate(() -> {
+	            try {
+	                Market.step(scheduler);
+	                world.step(scheduler);
+	            } catch (Exception e) {
+	                System.err.println("Error in simulation step: " + e.getMessage());
+	                e.printStackTrace(System.err);
+	            }
+	        }, 0, SIMULATION_INTERVAL, TimeUnit.MILLISECONDS);
+
+	        System.out.println("Simulation initialized successfully");
+	    } catch (Exception e) {
+	        System.err.println("FATAL: Failed to initialize SimulationServlet: " + e.getMessage());
+	        e.printStackTrace(System.err);
+	        throw new RuntimeException("SimulationServlet initialization failed", e);
+	    }
 	}
 
 	@Override

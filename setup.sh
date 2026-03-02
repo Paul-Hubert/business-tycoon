@@ -204,10 +204,10 @@ ADD https://repo1.maven.org/maven2/jakarta/servlet/jakarta.servlet-api/5.0.0/jak
 
 RUN mkdir -p classes && \
     find src -name '*.java' > sources.txt && \
-    javac -cp "lib/*" -d classes -source 18 -target 18 @sources.txt
+    javac -cp "lib/*" -d classes -source 17 -target 17 @sources.txt
 
 # ── Stage 2: Tomcat runtime ────────────────────────────────
-FROM tomcat:10.0-jdk18-temurin
+FROM tomcat:10.0
 
 RUN rm -rf /usr/local/tomcat/webapps/*
 RUN mkdir -p /usr/local/tomcat/webapps/ROOT/WEB-INF/classes \

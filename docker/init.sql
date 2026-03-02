@@ -1,9 +1,7 @@
--- ============================================================
--- Trade Empire — Database Initialization
--- This runs automatically on first container startup.
--- The database 'db' and user 'user' are created by MariaDB
--- environment variables in docker-compose.yml.
--- ============================================================
+-- ==========================================================
+-- Trade Empire — Auto-generated database schema
+-- Runs once on first container startup.
+-- ==========================================================
 
 USE db;
 

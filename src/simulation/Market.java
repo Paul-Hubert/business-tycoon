@@ -1,10 +1,5 @@
 package simulation;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,11 +7,6 @@ import java.util.ArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import data.Resource;
 import database.ConnectionProvider;
@@ -172,32 +162,10 @@ public class Market {
 		
 	}
 
-	public static void updatePrice() throws IOException, InterruptedException, ParseException {
-		
-		HttpRequest request = HttpRequest.newBuilder()
-				.uri(URI.create("https://yfapi.net/v6/finance/quote?region=US&lang=en&symbols=WMT%2CAAPL%2CTSLA"))
-				.header("accept", "application/json")
-				.header("x-api-key", "Ad3Cs8Xv1Y2pOZ42as1ptyREYq2DyYOaajV0cUH3")
-				.method("GET", HttpRequest.BodyPublishers.noBody())
-				.build();
-			
-		HttpResponse<String> response = HttpClient.newHttpClient()
-			.send(request, HttpResponse.BodyHandlers.ofString());
-			
-	    JSONParser parse = new JSONParser();
-	    JSONObject data_obj = (JSONObject) parse.parse(response.body());
-	    
-	    JSONObject obj = (JSONObject) data_obj.get("quoteResponse");
-		
-	    JSONArray result = (JSONArray) obj.get("result");
-		
-	    for (int i = 0; i < result.size(); i++) {
-	    	JSONObject data = (JSONObject) result.get(i);
-	    	long price = ((Double) (((double) data.get("regularMarketPrice")) * 100)).longValue();
-	    	if (i == 0) prices[Resource.bread.getID()] = price / 10;
-	    	if (i == 1) prices[Resource.phone.getID()] = price * 5;
-	    	if (i == 2) prices[Resource.car.getID()] = price * 10;
-	    }
+	public static void updatePrice() {
+		prices[Resource.bread.getID()] = 350;      // $3.50
+		prices[Resource.phone.getID()] = 89900;     // $899.00
+		prices[Resource.car.getID()] = 3500000;     // $35,000.00
 	}
 	
 }
