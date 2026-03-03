@@ -9,53 +9,63 @@ import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 
 import simulation.Market;
+import simulation.TickEngine;
 import simulation.World;
 
 @WebListener
 public class SimulationServlet implements ServletContextListener {
-    
-	private ScheduledExecutorService scheduler;
-	
-	public static long SIMULATION_INTERVAL = 1000;
-	public static long PRICE_INTERVAL_MINUTES = 15;
-	
-	@Override
-	public void contextInitialized(ServletContextEvent event) {
-	    try {
-	        scheduler = Executors.newScheduledThreadPool(16);
 
-	        World world = World.create();
+    private ScheduledExecutorService legacyScheduler;
 
-	        scheduler.scheduleAtFixedRate(() -> {
-	            try {
-	                Market.updatePrice();
-	            } catch (Exception e) {
-	                System.err.println("Error in Market.updatePrice: " + e.getMessage());
-	                e.printStackTrace(System.err);
-	            }
-	        }, 0, PRICE_INTERVAL_MINUTES, TimeUnit.MINUTES);
+    public static final long SIMULATION_INTERVAL    = 1000;
+    public static final long PRICE_INTERVAL_MINUTES = 15;
 
-	        scheduler.scheduleAtFixedRate(() -> {
-	            try {
-	                Market.step(scheduler);
-	                world.step(scheduler);
-	            } catch (Exception e) {
-	                System.err.println("Error in simulation step: " + e.getMessage());
-	                e.printStackTrace(System.err);
-	            }
-	        }, 0, SIMULATION_INTERVAL, TimeUnit.MILLISECONDS);
+    @Override
+    public void contextInitialized(ServletContextEvent event) {
+        try {
+            // ── Legacy simulation (Market + World) ────────────────────────
+            // Kept running for backward compatibility with the JSP-based UI.
+            // Phase 2 will migrate this logic into the TickEngine steps.
+            legacyScheduler = Executors.newScheduledThreadPool(4);
 
-	        System.out.println("Simulation initialized successfully");
-	    } catch (Exception e) {
-	        System.err.println("FATAL: Failed to initialize SimulationServlet: " + e.getMessage());
-	        e.printStackTrace(System.err);
-	        throw new RuntimeException("SimulationServlet initialization failed", e);
-	    }
-	}
+            World world = World.create();
 
-	@Override
-	public void contextDestroyed(ServletContextEvent event) {
-	    scheduler.shutdownNow();
-	 }
+            legacyScheduler.scheduleAtFixedRate(() -> {
+                try {
+                    Market.updatePrice();
+                } catch (Exception e) {
+                    System.err.println("[SIM] Market.updatePrice error: " + e.getMessage());
+                }
+            }, 0, PRICE_INTERVAL_MINUTES, TimeUnit.MINUTES);
 
+            legacyScheduler.scheduleAtFixedRate(() -> {
+                try {
+                    Market.step(legacyScheduler);
+                    world.step(legacyScheduler);
+                } catch (Exception e) {
+                    System.err.println("[SIM] Simulation step error: " + e.getMessage());
+                }
+            }, 0, SIMULATION_INTERVAL, TimeUnit.MILLISECONDS);
+
+            // ── Phase 1 Tick Engine ────────────────────────────────────────
+            TickEngine.getInstance().start();
+
+            System.out.println("[SIM] Simulation initialized successfully");
+
+        } catch (Exception e) {
+            System.err.println("[SIM] FATAL: Failed to initialize simulation: " + e.getMessage());
+            e.printStackTrace(System.err);
+            throw new RuntimeException("SimulationServlet initialization failed", e);
+        }
+    }
+
+    @Override
+    public void contextDestroyed(ServletContextEvent event) {
+        System.out.println("[SIM] Shutting down simulation...");
+        if (legacyScheduler != null) {
+            legacyScheduler.shutdownNow();
+        }
+        TickEngine.getInstance().stop();
+        System.out.println("[SIM] Simulation stopped");
+    }
 }

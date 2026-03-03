@@ -22,6 +22,7 @@ RUN mkdir -p /usr/local/tomcat/webapps/ROOT/WEB-INF/classes \
 COPY WebContent/                        /usr/local/tomcat/webapps/ROOT/
 COPY --from=builder /build/classes/     /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/
 COPY WebContent/WEB-INF/lib/            /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/
+COPY config/                            /usr/local/tomcat/config/
 
 EXPOSE 8080
 CMD ["catalina.sh", "run"]
