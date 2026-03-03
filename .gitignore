@@ -2,3 +2,4 @@
 .project
 .metadata
 docker-compose.yml
+api_key.txt

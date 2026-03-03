@@ -146,6 +146,8 @@ public class MarketServlet extends HttpServlet {
                 handleHistory(conn, resource, resp);
             } else if (path.equals("/myorders")) {
                 handleMyOrders(conn, playerId, resp);
+            } else if (path.equals("/prices")) {
+                handleMarketPrices(conn, resp);
             } else {
                 resp.setStatus(404);
                 resp.getWriter().write(error("not_found").toJSONString());
@@ -349,6 +351,41 @@ public class MarketServlet extends HttpServlet {
 
         resp.setStatus(HttpServletResponse.SC_OK);
         resp.getWriter().write(success(data).toJSONString());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void handleMarketPrices(Connection conn, HttpServletResponse resp) throws Exception {
+        // Return current market prices for all resources based on recent trades
+        JSONObject prices = new JSONObject();
+
+        String sql = """
+            SELECT resource_name,
+                   COALESCE(AVG((buy_price + sell_price) / 2), NULL) as avg_price
+            FROM price_history
+            WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+            AND buy_price IS NOT NULL
+            AND sell_price IS NOT NULL
+            GROUP BY resource_name
+            """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String resource = rs.getString("resource_name");
+                double avgPrice = rs.getDouble("avg_price");
+                prices.put(resource, avgPrice);
+            }
+        }
+
+        // Ensure all resources have a price (use base price if no recent trades)
+        for (ResourceRegistry.Resource res : ResourceRegistry.allResources()) {
+            if (!prices.containsKey(res.name)) {
+                prices.put(res.name, res.basePrice);
+            }
+        }
+
+        resp.setStatus(HttpServletResponse.SC_OK);
+        resp.getWriter().write(success(prices).toJSONString());
     }
 
     // ── Utility ──────────────────────────────────────────────────────────────
