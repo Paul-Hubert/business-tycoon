@@ -116,12 +116,11 @@ public class ProductionServlet extends HttpServlet {
             }
         }
 
-        JSONObject result = new JSONObject();
-        result.put("success",     Boolean.TRUE);
-        result.put("facility_id", facilityId);
-        result.put("resource",    resourceName);
-        result.put("cost",        buildCost);
-        return result;
+        JSONObject data = new JSONObject();
+        data.put("facilityId", facilityId);
+        data.put("resource",   resourceName);
+        data.put("cost",       buildCost);
+        return success(data);
     }
 
     // ── /idle ────────────────────────────────────────────────────────────────
@@ -132,11 +131,10 @@ public class ProductionServlet extends HttpServlet {
         int rows = updateFacilityState(conn, facilityId, playerId, "active", "idle");
         if (rows == 0) throw new IllegalArgumentException("facility_not_found_or_wrong_state");
 
-        JSONObject result = new JSONObject();
-        result.put("success",     Boolean.TRUE);
-        result.put("facility_id", (long) facilityId);
-        result.put("state",       "idle");
-        return result;
+        JSONObject data = new JSONObject();
+        data.put("facilityId", (long) facilityId);
+        data.put("state",      "idle");
+        return success(data);
     }
 
     // ── /activate ────────────────────────────────────────────────────────────
@@ -147,11 +145,10 @@ public class ProductionServlet extends HttpServlet {
         int rows = updateFacilityState(conn, facilityId, playerId, "idle", "active");
         if (rows == 0) throw new IllegalArgumentException("facility_not_found_or_wrong_state");
 
-        JSONObject result = new JSONObject();
-        result.put("success",     Boolean.TRUE);
-        result.put("facility_id", (long) facilityId);
-        result.put("state",       "active");
-        return result;
+        JSONObject data = new JSONObject();
+        data.put("facilityId", (long) facilityId);
+        data.put("state",      "active");
+        return success(data);
     }
 
     // ── /downsize ────────────────────────────────────────────────────────────
@@ -193,14 +190,22 @@ public class ProductionServlet extends HttpServlet {
             }
         }
 
-        JSONObject result = new JSONObject();
-        result.put("success",     Boolean.TRUE);
-        result.put("facility_id", (long) facilityId);
-        result.put("refund",      refund);
-        return result;
+        JSONObject data = new JSONObject();
+        data.put("facilityId", (long) facilityId);
+        data.put("refund",     refund);
+        return success(data);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
+
+    @SuppressWarnings("unchecked")
+    private JSONObject success(Object data) {
+        JSONObject r = new JSONObject();
+        r.put("success", Boolean.TRUE);
+        r.put("data",    data);
+        r.put("error",   null);
+        return r;
+    }
 
     private int getFacilityId(JSONObject body) {
         Object raw = body.get("facility_id");

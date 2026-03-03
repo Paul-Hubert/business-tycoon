@@ -389,6 +389,8 @@ services:
       MARIADB_DATABASE:      ${DB_NAME}
       MARIADB_USER:          ${DB_USER}
       MARIADB_PASSWORD:      ${DB_PASS}
+    ports:
+      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./docker/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
@@ -406,6 +408,9 @@ services:
       dockerfile: Dockerfile
     container_name: tycoon-app
     restart: unless-stopped
+    environment:
+      DB_HOST: mariadb
+      DB_NAME: ${DB_NAME}
     ports:
       - "${HOST_PORT}:8080"
     depends_on:

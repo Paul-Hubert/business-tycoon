@@ -79,6 +79,20 @@ public class TickEngine {
         System.out.println("[TICK] Stopped at tick #" + currentTick.get());
     }
 
+    /**
+     * Reset the tick count to 0.
+     * Used primarily for testing when the database is cleared.
+     * Can only be called when engine is not running.
+     */
+    public synchronized void reset() {
+        if (running) {
+            System.err.println("[TICK] Cannot reset while running");
+            return;
+        }
+        currentTick.set(0);
+        System.out.println("[TICK] Reset tick count to 0");
+    }
+
     // ── Main tick loop ───────────────────────────────────────────────────────
 
     private void executeTick() {
@@ -157,7 +171,8 @@ public class TickEngine {
     // ── Step 2: Run production ───────────────────────────────────────────────
 
     private void step2RunProduction(Connection conn, int tick) throws Exception {
-        String sql = "SELECT id, player_id, resource_name, production_capacity FROM facilities WHERE state = 'active'";
+        // ORDER BY id ensures deterministic processing order across runs
+        String sql = "SELECT id, player_id, resource_name, production_capacity FROM facilities WHERE state = 'active' ORDER BY id ASC";
         try (PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -170,7 +185,7 @@ public class TickEngine {
 
                 if (recipe == null) {
                     // Raw resource — no inputs needed, always produces at capacity
-                    addToInventory(conn, playerId, resourceName, capacity);
+                    addToInventory(conn, playerId, resourceName, capacity, tick);
                     continue;
                 }
 
@@ -178,14 +193,14 @@ public class TickEngine {
                 int actualOutput = calculateActualOutput(conn, playerId, recipe, capacity);
                 if (actualOutput <= 0) continue;
 
-                // Consume inputs proportionally
+                // Consume inputs using INTEGER division (round down) to avoid fractional items
                 for (Map.Entry<String, Integer> input : recipe.inputs.entrySet()) {
-                    double consume = input.getValue() * ((double) actualOutput / recipe.outputQuantity);
+                    int consume = (input.getValue() * actualOutput) / recipe.outputQuantity;
                     deductFromInventory(conn, playerId, input.getKey(), consume);
                 }
 
                 // Add output
-                addToInventory(conn, playerId, resourceName, actualOutput);
+                addToInventory(conn, playerId, resourceName, actualOutput, tick);
             }
         }
     }
@@ -322,9 +337,9 @@ public class TickEngine {
     // ── Step 5: Match market orders ──────────────────────────────────────────
 
     private void step5MatchMarketOrders(Connection conn, int tick) throws Exception {
-        // Get all resources with open orders
+        // Get all resources with open orders, ordered deterministically
         List<String> activeResources = new ArrayList<>();
-        String resSql = "SELECT DISTINCT resource_name FROM market_orders";
+        String resSql = "SELECT DISTINCT resource_name FROM market_orders ORDER BY resource_name ASC";
         try (PreparedStatement ps = conn.prepareStatement(resSql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) activeResources.add(rs.getString("resource_name"));
@@ -385,7 +400,7 @@ public class TickEngine {
 
             // Transfer inventory: seller → buyer
             deductFromInventory(conn, sell.playerId, resourceName, tradeQty);
-            addToInventory(conn, buy.playerId, resourceName, tradeQty);
+            addToInventory(conn, buy.playerId, resourceName, tradeQty, tick);
 
             // Transfer cash
             updateCash(conn, sell.playerId,  sellerRevenue);
@@ -416,8 +431,8 @@ public class TickEngine {
 
     private List<Order> fetchOrders(Connection conn, String resourceName, String side) throws Exception {
         String sql = side.equals("sell")
-            ? "SELECT id, player_id, price, quantity, quantity_filled, keep_reserve FROM market_orders WHERE resource_name = ? AND side = 'sell' ORDER BY price ASC, created_at ASC"
-            : "SELECT id, player_id, price, quantity, quantity_filled, target_quantity FROM market_orders WHERE resource_name = ? AND side = 'buy' ORDER BY price DESC, created_at ASC";
+            ? "SELECT id, player_id, price, quantity, quantity_filled, keep_reserve FROM market_orders WHERE resource_name = ? AND side = 'sell' ORDER BY price ASC, created_at ASC, id ASC"
+            : "SELECT id, player_id, price, quantity, quantity_filled, target_quantity FROM market_orders WHERE resource_name = ? AND side = 'buy' ORDER BY price DESC, created_at ASC, id ASC";
 
         List<Order> orders = new ArrayList<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -521,16 +536,18 @@ public class TickEngine {
         }
     }
 
-    void addToInventory(Connection conn, int playerId, String resourceName, double qty) throws Exception {
+    void addToInventory(Connection conn, int playerId, String resourceName, double qty, int tick) throws Exception {
         String sql = """
-            INSERT INTO inventory (player_id, resource_name, quantity)
-            VALUES (?, ?, ?)
-            ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)
+            INSERT INTO inventory (player_id, resource_name, quantity, last_decay_tick)
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity),
+                                  last_decay_tick = VALUES(last_decay_tick)
             """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, playerId);
             ps.setString(2, resourceName);
             ps.setDouble(3, qty);
+            ps.setInt(4, tick);
             ps.executeUpdate();
         }
     }

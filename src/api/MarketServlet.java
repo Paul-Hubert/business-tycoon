@@ -154,6 +154,10 @@ public class MarketServlet extends HttpServlet {
             System.err.println("[MARKET] GET error: " + e.getMessage());
             resp.setStatus(500);
             resp.getWriter().write(error("db_error").toJSONString());
+        } catch (Exception e) {
+            System.err.println("[MARKET] GET error: " + e.getMessage());
+            resp.setStatus(500);
+            resp.getWriter().write(error("internal_error").toJSONString());
         }
     }
 
@@ -203,14 +207,13 @@ public class MarketServlet extends HttpServlet {
             }
         }
 
-        JSONObject result = new JSONObject();
-        result.put("success",  Boolean.TRUE);
-        result.put("order_id", orderId);
-        result.put("resource", resourceName);
-        result.put("side",     side);
-        result.put("price",    price);
-        result.put("quantity", (long) quantity);
-        return result;
+        JSONObject data = new JSONObject();
+        data.put("orderId",  orderId);
+        data.put("resource", resourceName);
+        data.put("side",     side);
+        data.put("price",    price);
+        data.put("quantity", (long) quantity);
+        return success(data);
     }
 
     @SuppressWarnings("unchecked")
