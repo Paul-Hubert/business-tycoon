@@ -128,9 +128,13 @@ public class AICorporationTask implements Runnable {
 
     private String callAnthropic(String state, String prices, String leaderboard) throws Exception {
         ConfigManager config = ConfigManager.getInstance();
-        String anthropicKey = config.getString("ai.anthropic_api_key", "");
+        // Try environment variable first, then config file
+        String anthropicKey = System.getenv("ANTHROPIC_API_KEY");
+        if (anthropicKey == null || anthropicKey.isEmpty()) {
+            anthropicKey = config.getString("ai.anthropic_api_key", "");
+        }
 
-        if (anthropicKey.isEmpty()) {
+        if (anthropicKey == null || anthropicKey.isEmpty()) {
             System.err.println("[AI:" + name + "] No Anthropic API key configured");
             return null;
         }
