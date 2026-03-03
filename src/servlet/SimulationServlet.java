@@ -135,9 +135,9 @@ public class SimulationServlet implements ServletContextListener {
                     }
 
                     if (!hasToken) {
-                        // Create a long-lived token (100 years)
+                        // Create a long-lived token (10 years)
                         String token = UUID.randomUUID().toString();
-                        String insertSql = "INSERT INTO auth_tokens (player_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 100 YEAR))";
+                        String insertSql = "INSERT INTO auth_tokens (player_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 YEAR))";
                         try (PreparedStatement ip = conn.prepareStatement(insertSql)) {
                             ip.setInt(1, playerId);
                             ip.setString(2, token);

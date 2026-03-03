@@ -1,3 +1,4 @@
 /bin/
 .project
 .metadata
+docker-compose.yml

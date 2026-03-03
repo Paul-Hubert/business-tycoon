@@ -50,6 +50,16 @@ ok()    { printf "${GREEN}[OK]${NC}    %s\n" "$*"; }
 warn()  { printf "${YELLOW}[WARN]${NC}  %s\n" "$*"; }
 fail()  { printf "${RED}[FAIL]${NC}  %s\n" "$*"; exit 1; }
 
+# ── Load ANTHROPIC_API_KEY from api_key.txt ────────────────
+
+ANTHROPIC_API_KEY=""
+if [ -f "api_key.txt" ]; then
+  ANTHROPIC_API_KEY=$(cat api_key.txt | tr -d '\n\r')
+  ok "Loaded ANTHROPIC_API_KEY from api_key.txt"
+else
+  warn "api_key.txt not found — AI corporations will not work without ANTHROPIC_API_KEY"
+fi
+
 # ── Handle flags ───────────────────────────────────────────
 
 case "${1:-}" in
@@ -411,6 +421,7 @@ services:
     environment:
       DB_HOST: mariadb
       DB_NAME: ${DB_NAME}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
     ports:
       - "${HOST_PORT}:8080"
     depends_on:
@@ -460,6 +471,8 @@ echo ""
 info "Building images and starting containers…"
 echo ""
 
+# Export ANTHROPIC_API_KEY so docker compose can use it
+export ANTHROPIC_API_KEY
 ${COMPOSE} up --build -d
 
 # ============================================================
