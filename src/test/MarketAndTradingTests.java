@@ -406,18 +406,4 @@ public class MarketAndTradingTests extends RestTestBase {
         assertTrue("Central bank should collect market fee",
             bankAfter_fee > bankBefore_fee);
     }
-
-    // ── Helper Methods ───────────────────────────────────────────────────────────
-
-    private void simulateTicks(int count) throws Exception {
-        simulation.TickEngine engine = simulation.TickEngine.getInstance();
-        if (!engine.isRunning()) {
-            engine.start();
-        }
-        try {
-            Thread.sleep(count * 300);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
 }

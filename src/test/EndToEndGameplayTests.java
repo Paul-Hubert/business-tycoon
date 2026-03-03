@@ -77,7 +77,9 @@ public class EndToEndGameplayTests extends RestTestBase {
 
         // STEP 1: Farmer produces wheat
         wheatFarmer.buildFacility("wheat");
+        System.out.println("[TEST] Farmer cash after building: " + queryOne("SELECT cash FROM players WHERE id = ?", wheatFarmer.getPlayerId()).get("cash"));
         simulateTicks(15);
+        System.out.println("[TEST] Farmer cash after 15 ticks: " + queryOne("SELECT cash FROM players WHERE id = ?", wheatFarmer.getPlayerId()).get("cash"));
 
         // STEP 2: Farmer sells wheat to baker
         JSONObject farmerWheat = queryOne(
@@ -85,16 +87,40 @@ public class EndToEndGameplayTests extends RestTestBase {
             wheatFarmer.getPlayerId()
         );
         int wheatAvailable = ((Number) farmerWheat.get("qty")).intValue();
+        System.out.println("[TEST] Wheat available for farmer: " + wheatAvailable);
 
         if (wheatAvailable > 0) {
-            wheatFarmer.createSellOrder("wheat", wheatAvailable / 2, 10.0);
-            baker.createBuyOrder("wheat", wheatAvailable / 2, 10.0);
+            // Buy a smaller quantity to avoid bankruptcy due to market fees
+            // Market fee is split: 1% for buyer + 1% for seller = ~2% total
+            // Baker has 1000 cash, so can afford ~490 wheat at 10/unit (490*10*1.01 ~= 4949)
+            // But use even smaller quantity to be safe
+            int buyQty = Math.min(wheatAvailable / 4, 40);  // Buy at most 40 wheat (cost ~404 with fees)
+
+            System.out.println("[TEST] Creating sell order: " + buyQty + " wheat at 10.0");
+            wheatFarmer.createSellOrder("wheat", buyQty, 10.0);
+            System.out.println("[TEST] Creating buy order: " + buyQty + " wheat at 10.0");
+            baker.createBuyOrder("wheat", buyQty, 10.0);
+            System.out.println("[TEST] Baker cash before market ticks: " + queryOne("SELECT cash FROM players WHERE id = ?", baker.getPlayerId()).get("cash"));
 
             simulateTicks(10);
+            System.out.println("[TEST] Baker cash after market ticks: " + queryOne("SELECT cash FROM players WHERE id = ?", baker.getPlayerId()).get("cash"));
+
+            // Check how much wheat the baker bought
+            JSONObject bakerWheat = queryOne(
+                "SELECT COALESCE(quantity, 0) as qty FROM inventory WHERE player_id = ? AND resource_name = 'wheat'",
+                baker.getPlayerId()
+            );
+            System.out.println("[TEST] Baker wheat inventory after market: " + bakerWheat.get("qty"));
         }
 
         // STEP 3: Baker builds bread facility and produces bread
+        JSONObject bakerCash = queryOne(
+            "SELECT cash FROM players WHERE id = ?",
+            baker.getPlayerId()
+        );
+        System.out.println("[TEST] Baker cash before building bread: " + bakerCash.get("cash"));
         baker.buildFacility("bread");
+        System.out.println("[TEST] Baker successfully built bread facility");
         simulateTicks(20);
 
         JSONObject bakerBread = queryOne(
@@ -353,19 +379,5 @@ public class EndToEndGameplayTests extends RestTestBase {
         int ironRemaining = ironInv != null ? ((Number) ironInv.get("qty")).intValue() : 0;
         assertTrue("Economic activity should produce resources (wheat=" + wheatRemaining + ", iron=" + ironRemaining + ")",
             wheatRemaining > 0 || ironRemaining > 0);
-    }
-
-    // ── Helper Methods ───────────────────────────────────────────────────────────
-
-    private void simulateTicks(int count) throws Exception {
-        simulation.TickEngine engine = simulation.TickEngine.getInstance();
-        if (!engine.isRunning()) {
-            engine.start();
-        }
-        try {
-            Thread.sleep(count * 300);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
     }
 }

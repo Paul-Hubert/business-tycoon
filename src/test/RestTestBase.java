@@ -138,6 +138,16 @@ public class RestTestBase {
             try (Statement stmt = conn.createStatement()) {
                 stmt.execute("DELETE FROM game_state");
                 stmt.execute("INSERT INTO game_state (current_tick) VALUES (0)");
+                // Verify it was reset
+                java.sql.ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as cnt FROM game_state WHERE current_tick = 0");
+                if (rs.next()) {
+                    int count = rs.getInt("cnt");
+                    if (count == 0) {
+                        System.err.println("[TEST] ERROR: game_state reset failed - no rows with current_tick=0!");
+                    } else {
+                        System.out.println("[TEST] game_state reset successfully: " + count + " row(s) with tick=0");
+                    }
+                }
             }
         }
 
