@@ -279,14 +279,8 @@
 
 									<div class="form-group">
 										<label class="form-label">Resource</label>
-										<select class="form-select" name="resource" onchange="search()" required>
-											<%
-											for (Resource res : Resource.values()) {
-											%>
-											<option value="<%= res.getID() %>"><%= res %></option>
-											<%
-											}
-											%>
+										<select class="form-select" name="resource" onchange="search()" required id="resource-select">
+											<option value="">Loading resources...</option>
 										</select>
 									</div>
 

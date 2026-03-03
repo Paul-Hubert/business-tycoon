@@ -34,31 +34,122 @@ function changeResearch(resource, element) {
     $.post("/action", {"action":"changeResearch", resource, "cost":element.value}, reload, "json").fail(error);
 }
 
-// Offers
+// Offers (REST API Market)
 function search() {
     let resource = $("#search [name='resource']").val();
-    let buy = $("#search [name='achat_vente']:checked").val();
-    let price = $("#search [name='price']").val();
-    let quantity = $("#search [name='quantity']").val();
 
-    $.post("/action", {"action":"search", resource, buy, price, quantity}, reload, "json").fail(error);
+    // Fetch orderbook for this resource from REST API
+    $.getJSON("/api/v1/market/orderbook/" + resource, {}, function(response) {
+        if (response.success && response.data) {
+            displayOrderbook(response.data);
+        }
+    }).fail(error);
 }
 
 function publish() {
     let resource = $("#search [name='resource']").val();
-    let buy = $("#search [name='achat_vente']:checked").val();
-    let price = $("#search [name='price']").val();
-    let quantity = $("#search [name='quantity']").val();
+    let side = $("#search [name='achat_vente']:checked").val() === "true" ? "buy" : "sell";
+    let price = parseFloat($("#search [name='price']").val());
+    let quantity = parseInt($("#search [name='quantity']").val());
 
-    $.post("/action", {"action":"publish", resource, buy, price, quantity}, function(data) {
-        reload(data);
-        showToast("Offer published!", "gold");
-    }, "json").fail(error);
+    let orderData = {
+        resource: resource,
+        side: side,
+        price: price,
+        quantity: quantity
+    };
+
+    $.ajax({
+        url: "/api/v1/market/order",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(orderData),
+        success: function(response) {
+            if (response.success) {
+                search(); // Refresh orderbook
+                showToast("Order posted!", "gold");
+            } else {
+                showToast(response.error || "Failed to post order", "error");
+            }
+        },
+        error: error
+    });
 }
 
 function deleteOffer(e) {
     let id = $(e).attr("for");
-    $.post("/action", {"action":"delete", id}, reload, "json").fail(error);
+
+    $.ajax({
+        url: "/api/v1/market/order/" + id,
+        type: "DELETE",
+        success: function(response) {
+            if (response.success) {
+                search(); // Refresh orderbook
+                showToast("Order cancelled!", "gold");
+            } else {
+                showToast(response.error || "Failed to cancel order", "error");
+            }
+        },
+        error: error
+    });
+}
+
+// Display orderbook from REST API
+function displayOrderbook(data) {
+    let offers = $("#offer-list");
+    offers.empty();
+
+    let template = $("#template");
+    let allOrders = [];
+
+    // Add sell orders (asks)
+    if (data.sells && Array.isArray(data.sells)) {
+        for (let i = 0; i < data.sells.length; i++) {
+            let level = data.sells[i];
+            allOrders.push({
+                price: level.price,
+                quantity: level.quantity,
+                side: "sell",
+                num_orders: level.num_orders
+            });
+        }
+    }
+
+    // Add buy orders (bids)
+    if (data.buys && Array.isArray(data.buys)) {
+        for (let i = 0; i < data.buys.length; i++) {
+            let level = data.buys[i];
+            allOrders.push({
+                price: level.price,
+                quantity: level.quantity,
+                side: "buy",
+                num_orders: level.num_orders
+            });
+        }
+    }
+
+    // Display orders
+    for (let i = 0; i < allOrders.length; i++) {
+        let order = allOrders[i];
+
+        let offer_card = template.clone();
+        offer_card.appendTo(offers);
+        offer_card.attr("id", "order-" + i);
+        offer_card.attr("side", order.side);
+        offer_card.removeAttr("hidden");
+
+        offer_card.find(".price").html(formatMoney(order.price));
+        offer_card.find(".quantity").html(formatNumber(order.quantity) + " (" + order.num_orders + " orders)");
+        offer_card.find(".offerer").html(order.side.toUpperCase());
+
+        // Hide delete button for orderbook view (aggregated orders)
+        offer_card.find(".delete").attr("hidden", true);
+    }
+
+    // Show message if no orders
+    if (allOrders.length === 0) {
+        offers.append("<li style='text-align:center; color:#999; padding:20px;'>No open orders for this resource</li>");
+    }
 }
 
 
@@ -253,9 +344,33 @@ function abbreviate(n) {
 // INIT
 // ============================================================
 
+function loadResources() {
+    $.getJSON("/api/v1/config", {}, function(response) {
+        if (response.success && response.data && response.data.resources) {
+            let select = $("#resource-select");
+            select.empty();
+
+            let resources = response.data.resources;
+            for (let key in resources) {
+                let resource = resources[key];
+                select.append($("<option>").attr("value", key).text(key));
+            }
+
+            // Trigger search on first resource
+            if (select.find("option").length > 0) {
+                select.val(select.find("option:first").val());
+                search();
+            }
+        }
+    }).fail(function() {
+        console.log("Failed to load resources from API");
+    });
+}
+
 window.addEventListener("load", function() {
     updateCurrencySpy();
     $.ajaxSetup({ cache: false });
+    loadResources(); // Load resources for market dropdown
     refresh();
     setInterval(refresh, refresh_rate);
 });
