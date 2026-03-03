@@ -262,7 +262,7 @@
 									<h2 class="panel__title">Create Order</h2>
 								</div>
 
-								<form id="search" method="post" action="/action">
+								<form id="search">
 									<div class="form-group">
 										<label class="form-label">Order Type</label>
 										<div class="radio-group">

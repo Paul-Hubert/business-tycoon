@@ -23,15 +23,27 @@ function refresh() {
 }
 
 // Production
-function addProduction(resource) {
-    $.post("/action", {"action":"addProduction", resource}, function(data) {
-        reload(data);
-        showToast("Production added!", "success");
-    }, "json").fail(error);
+function addProduction(resourceId) {
+    let resourceName = $("#" + resourceId).data("resource") || resourceId;
+    $.ajax({
+        url: "/api/v1/production/build",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({resource: resourceName}),
+        success: function(response) {
+            if (response.success) {
+                refresh();
+                showToast("Production added!", "success");
+            } else {
+                showToast(response.error || "Failed to add production", "error");
+            }
+        },
+        error: error
+    });
 }
 
 function changeResearch(resource, element) {
-    $.post("/action", {"action":"changeResearch", resource, "cost":element.value}, reload, "json").fail(error);
+    console.warn("Research cost updates not yet implemented in REST API");
 }
 
 // Offers (REST API Market)
