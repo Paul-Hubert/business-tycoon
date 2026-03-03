@@ -38,6 +38,7 @@ public class AICorporationTask implements Runnable {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         this.playerId = rs.getInt("id");
+                        System.out.println("[AI:" + name + "] Found player ID: " + playerId);
                     } else {
                         System.err.println("[AI:" + name + "] Player not found in database");
                         return;
@@ -52,6 +53,7 @@ public class AICorporationTask implements Runnable {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         this.apiToken = rs.getString("token");
+                        System.out.println("[AI:" + name + "] Loaded token (first 20 chars): " + apiToken.substring(0, Math.min(20, apiToken.length())));
                     } else {
                         System.err.println("[AI:" + name + "] No valid token found for player " + playerId);
                     }
@@ -59,6 +61,7 @@ public class AICorporationTask implements Runnable {
             }
         } catch (Exception e) {
             System.err.println("[AI:" + name + "] Failed to load token: " + e.getMessage());
+            e.printStackTrace(System.err);
         }
     }
 
@@ -149,8 +152,8 @@ public class AICorporationTask implements Runnable {
             Leaderboard:
             %s
 
-            You may take ONE action this turn. Choose the highest-value action for your strategy.
-            Respond with a JSON object like one of these:
+            CRITICAL: Respond with ONLY a single line of valid JSON. No explanation, no markdown, no reasoning.
+            Choose ONE action:
             {"action": "build", "resource": "wheat"}
             {"action": "sell", "resource": "steel", "price": 15.00, "quantity": 100, "keepReserve": 50}
             {"action": "buy", "resource": "iron", "price": 4.00, "quantity": 200}
@@ -186,18 +189,39 @@ public class AICorporationTask implements Runnable {
             return null;
         }
 
+        System.out.println("[AI:" + name + "] Anthropic response: " + response.body().substring(0, Math.min(300, response.body().length())));
+
         JSONObject result = (JSONObject) new JSONParser().parse(response.body());
         JSONArray content = (JSONArray) result.get("content");
         if (content != null && content.size() > 0) {
             JSONObject firstContent = (JSONObject) content.get(0);
-            return (String) firstContent.get("text");
+            String text = (String) firstContent.get("text");
+            System.out.println("[AI:" + name + "] Decision text: " + text);
+            return text;
         }
+        System.out.println("[AI:" + name + "] No content in Anthropic response");
         return null;
     }
 
     private void executeDecision(String decisionJson) throws Exception {
         try {
-            JSONObject decision = (JSONObject) new JSONParser().parse(decisionJson.trim());
+            String cleanedJson = decisionJson.trim();
+            // Extract JSON if wrapped in markdown code block
+            if (cleanedJson.contains("```json")) {
+                int start = cleanedJson.indexOf("```json") + 7;
+                int end = cleanedJson.indexOf("```", start);
+                if (end > start) {
+                    cleanedJson = cleanedJson.substring(start, end).trim();
+                }
+            } else if (cleanedJson.contains("```")) {
+                int start = cleanedJson.indexOf("```") + 3;
+                int end = cleanedJson.indexOf("```", start);
+                if (end > start) {
+                    cleanedJson = cleanedJson.substring(start, end).trim();
+                }
+            }
+
+            JSONObject decision = (JSONObject) new JSONParser().parse(cleanedJson);
             String action = (String) decision.get("action");
 
             if (action == null) {
@@ -217,21 +241,23 @@ public class AICorporationTask implements Runnable {
                 case "sell" -> {
                     JSONObject body = new JSONObject();
                     body.put("resource", decision.get("resource"));
+                    body.put("side", "sell");
                     body.put("price", decision.get("price"));
                     body.put("quantity", decision.get("quantity"));
                     if (decision.containsKey("keepReserve")) {
-                        body.put("keepReserve", decision.get("keepReserve"));
+                        body.put("keep_reserve", decision.get("keepReserve"));
                     }
-                    callGameApi("POST", "/api/v1/market/sell", body.toJSONString());
+                    callGameApi("POST", "/api/v1/market/order", body.toJSONString());
                     System.out.println("[AI:" + name + "] Posted sell order");
                 }
 
                 case "buy" -> {
                     JSONObject body = new JSONObject();
                     body.put("resource", decision.get("resource"));
+                    body.put("side", "buy");
                     body.put("price", decision.get("price"));
                     body.put("quantity", decision.get("quantity"));
-                    callGameApi("POST", "/api/v1/market/buy", body.toJSONString());
+                    callGameApi("POST", "/api/v1/market/order", body.toJSONString());
                     System.out.println("[AI:" + name + "] Posted buy order");
                 }
 
@@ -258,8 +284,13 @@ public class AICorporationTask implements Runnable {
     private String callGameApi(String method, String path, String body) throws Exception {
         String gameApiUrl = System.getenv().getOrDefault("GAME_API_URL", "http://localhost:8080");
         HttpClient client = HttpClient.newHttpClient();
+        String fullUrl = gameApiUrl + path;
+        String tokenDebug = apiToken == null ? "null" : apiToken.substring(0, Math.min(20, apiToken.length())) + "...";
+
+        System.out.println("[AI:" + name + "] Calling " + method + " " + path + " (token: " + tokenDebug + ")");
+
         HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
-            .uri(URI.create(gameApiUrl + path))
+            .uri(URI.create(fullUrl))
             .header("Authorization", "Bearer " + apiToken);
 
         if ("POST".equals(method)) {
@@ -272,6 +303,8 @@ public class AICorporationTask implements Runnable {
         HttpResponse<String> response = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() >= 400) {
             System.err.println("[AI:" + name + "] API error " + response.statusCode() + ": " + response.body());
+        } else {
+            System.out.println("[AI:" + name + "] API " + response.statusCode() + " OK");
         }
         return response.body();
     }
