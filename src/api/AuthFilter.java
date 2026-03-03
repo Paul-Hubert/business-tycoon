@@ -70,16 +70,38 @@ public class AuthFilter implements Filter {
     }
 
     /**
-     * Validates the token in one DB round-trip.
+     * Validates the token in two checks:
+     * 1. Check auth_tokens (temporary session tokens)
+     * 2. Check api_keys (permanent API keys)
      * Returns the player_id on success, null on failure/expiry.
      */
     private Integer validateToken(String token) {
-        String sql = "SELECT player_id FROM auth_tokens WHERE token = ? AND expires_at > NOW()";
-        try (Connection conn = DB.connect();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, token);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getInt("player_id");
+        try (Connection conn = DB.connect()) {
+            // Check regular auth token
+            String tokenSql = "SELECT player_id FROM auth_tokens WHERE token = ? AND expires_at > NOW()";
+            try (PreparedStatement ps = conn.prepareStatement(tokenSql)) {
+                ps.setString(1, token);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getInt("player_id");
+                }
+            }
+
+            // Check API key
+            String apiKeySql = "SELECT player_id FROM api_keys WHERE api_key = ?";
+            try (PreparedStatement ps = conn.prepareStatement(apiKeySql)) {
+                ps.setString(1, token);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        int playerId = rs.getInt("player_id");
+                        // Update last_used timestamp
+                        String updateSql = "UPDATE api_keys SET last_used = NOW() WHERE api_key = ?";
+                        try (PreparedStatement updatePs = conn.prepareStatement(updateSql)) {
+                            updatePs.setString(1, token);
+                            updatePs.executeUpdate();
+                        }
+                        return playerId;
+                    }
+                }
             }
         } catch (SQLException e) {
             System.err.println("[AUTH] DB error validating token: " + e.getMessage());
