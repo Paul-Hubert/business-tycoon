@@ -19,23 +19,8 @@ public class IndexServlet extends HttpServlet {
     }
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		
-		try {
-			
-			if(User.isConnected(request.getSession())) {
-				response.sendRedirect("/game");
-				return;
-			}
-		
-			request.getRequestDispatcher("/WEB-INF/index.jsp").forward(request, response);
-		} catch (Exception e) {
-			e.printStackTrace();
-			
-			request.setAttribute("error", e.getMessage());
-			request.getRequestDispatcher("/WEB-INF/index.jsp").forward(request, response);
-			
-		}
-		
+		// Redirect root to the new SPA login page
+		response.sendRedirect("/login.html");
 	}
 	
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

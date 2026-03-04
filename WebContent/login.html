@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Empire — Login</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-dark:     #0d1117;
+            --bg-card:     #161b22;
+            --bg-hover:    #1c2128;
+            --border:      #30363d;
+            --text-primary: #e6edf3;
+            --text-muted:  #8b949e;
+            --accent:      #58a6ff;
+            --accent-hover:#79c0ff;
+            --success:     #3fb950;
+            --danger:      #f85149;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            font-size: 14px;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            width: 380px;
+            max-width: 90vw;
+        }
+
+        .login-card h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .login-card .subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: border-color 0.15s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.15s;
+        }
+
+        .btn:hover { background: var(--border); }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #0d1117;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .error-msg {
+            color: var(--danger);
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .success-msg {
+            color: var(--success);
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h1>Trade Empire</h1>
+    <div class="subtitle">Multiplayer economic simulation</div>
+
+    <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" class="form-input" autocomplete="username" maxlength="32">
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" class="form-input" autocomplete="current-password">
+    </div>
+
+    <div class="btn-row">
+        <button class="btn" id="btn-signup" onclick="signup()">Sign Up</button>
+        <button class="btn btn-primary" id="btn-login" onclick="login()">Login</button>
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+    <div class="success-msg" id="success-msg"></div>
+</div>
+
+<script>
+    // If already logged in, redirect
+    if (localStorage.getItem('token')) {
+        window.location.href = '/game.html';
+    }
+
+    // Enter key submits login
+    document.getElementById('password').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') login();
+    });
+    document.getElementById('username').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('password').focus();
+    });
+
+    function showError(msg) {
+        const el = document.getElementById('error-msg');
+        el.textContent = msg;
+        el.style.display = 'block';
+        document.getElementById('success-msg').style.display = 'none';
+    }
+
+    function showSuccess(msg) {
+        const el = document.getElementById('success-msg');
+        el.textContent = msg;
+        el.style.display = 'block';
+        document.getElementById('error-msg').style.display = 'none';
+    }
+
+    function setLoading(loading) {
+        document.getElementById('btn-login').disabled = loading;
+        document.getElementById('btn-signup').disabled = loading;
+    }
+
+    async function login() {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!username || !password) { showError('Enter username and password'); return; }
+
+        setLoading(true);
+        try {
+            const resp = await fetch('/api/v1/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await resp.json();
+
+            if (data.success && data.data) {
+                localStorage.setItem('token', data.data.token);
+                localStorage.setItem('playerId', data.data.playerId);
+                window.location.href = '/game.html';
+            } else {
+                showError(data.error === 'invalid_credentials' ? 'Invalid username or password' : (data.error || 'Login failed'));
+            }
+        } catch (err) {
+            showError('Connection error');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function signup() {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!username || !password) { showError('Enter username and password'); return; }
+        if (password.length < 3) { showError('Password must be at least 3 characters'); return; }
+
+        setLoading(true);
+        try {
+            const resp = await fetch('/api/v1/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+                showSuccess('Account created! Logging in...');
+                // Auto-login after signup
+                setTimeout(login, 500);
+            } else {
+                const msgs = {
+                    username_taken: 'Username already taken',
+                    missing_username: 'Enter a username',
+                    missing_password: 'Enter a password'
+                };
+                showError(msgs[data.error] || data.error || 'Signup failed');
+            }
+        } catch (err) {
+            showError('Connection error');
+        } finally {
+            setLoading(false);
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Empire</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="game-header">
+    <div class="header-logo">Trade Empire</div>
+    <div class="header-stats">
+        <div class="header-stat">
+            <span class="label">Cash</span>
+            <span class="value cash" id="header-cash">$&mdash;</span>
+        </div>
+        <div class="header-stat">
+            <span class="label">Net Worth</span>
+            <span class="value net-worth" id="header-net-worth">$&mdash;</span>
+        </div>
+        <div class="header-stat">
+            <span id="header-tick" class="text-muted" style="font-size:11px;"></span>
+        </div>
+    </div>
+    <span id="header-player" style="margin-left:8px;">&mdash;</span>
+    <button class="btn-icon" onclick="logout()" title="Logout">&#x23FB;</button>
+</header>
+
+<!-- MAIN LAYOUT -->
+<div id="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar">
+        <nav id="sidebar-nav"></nav>
+    </aside>
+
+    <!-- CONTENT AREA -->
+    <main id="content-area">
+
+        <!-- TAB BAR -->
+        <div id="tab-bar">
+            <button class="tab-btn active" data-tab="production">Production</button>
+            <button class="tab-btn" data-tab="market">Market</button>
+            <button class="tab-btn" data-tab="shop">Shop</button>
+            <button class="tab-btn" data-tab="chat">Chat</button>
+        </div>
+
+        <!-- TAB PANELS -->
+        <div id="tab-production" class="tab-panel"></div>
+        <div id="tab-market" class="tab-panel hidden"></div>
+        <div id="tab-shop" class="tab-panel hidden"></div>
+        <div id="tab-chat" class="tab-panel hidden"></div>
+
+    </main>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/state.js"></script>
+<script src="js/sidebar.js"></script>
+<script src="js/tabs/production.js"></script>
+<script src="js/tabs/market.js"></script>
+<script src="js/tabs/shop.js"></script>
+<script src="js/tabs/chat.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
